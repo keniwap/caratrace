@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box | Local Sample Farmer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .sample-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .sample-card {
+      max-width: 560px;
+    }
+
+    .sample-credentials {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 0;
+      padding: 16px;
+      border: 1px solid rgba(24, 83, 55, 0.14);
+      border-radius: 8px;
+      background: rgba(244, 250, 246, 0.72);
+      color: #244a35;
+      font-size: 14px;
+    }
+
+    .sample-credentials strong {
+      color: #102417;
+    }
+
+    .secondary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      border: 1px solid rgba(24, 83, 55, 0.18);
+      border-radius: 8px;
+      background: #ffffff;
+      color: #185337;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell" aria-label="Local sample farmer setup">
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <h1>Local Sample Farmer</h1>
+        <p>This creates one sample farmer account in this browser only while the system has no database.</p>
+      </header>
+
+      <section class="login-card sample-card" aria-labelledby="sample-title">
+        <h2 id="sample-title">Create sample data</h2>
+        <p class="subtitle">The seed is stored in your browser's localStorage and is not sent anywhere.</p>
+
+        <div class="sample-credentials">
+          <div>Email: <strong>sample.farmer@dairybox.local</strong></div>
+          <div>Password: <strong>sample123</strong></div>
+          <div>Farmer ID: <strong>2026-0001</strong></div>
+        </div>
+
+        <div class="sample-actions">
+          <button class="primary-button" id="seed-sample" type="button">Create and open sample account</button>
+          <a class="secondary-button" href="sample-collector-account.html">Open collector sample setup</a>
+          <a class="secondary-button" href="sample-staff-account.html">Open Staff sample setup</a>
+          <a class="secondary-button" href="sample-admin-account.html">Open Admin sample setup</a>
+          <a class="secondary-button" href="login.html">Back to login</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const SAMPLE_FARMER_ID = '2026-0001';
+    const SAMPLE_EMAIL = 'sample.farmer@dairybox.local';
+    const SAMPLE_PASSWORD = 'sample123';
+
+    const safeGet = (key, fallback) => {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value == null ? fallback : value;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+    const sampleUser = {
+      email: SAMPLE_EMAIL,
+      password: SAMPLE_PASSWORD,
+      role: 'farmer',
+      name: 'Ramon Villanueva',
+      farmerId: SAMPLE_FARMER_ID,
+      code: SAMPLE_FARMER_ID,
+      phone: '+63 917 555 0101',
+      location: 'Sipsipin, Jalajala',
+      verified: true,
+      createdAt: '2026-08-01T06:00:00.000+08:00',
+      preferences: {
+        pushNotifications: true,
+        language: 'fil'
+      },
+      carabaos: [
+        { id: 'CB-2601', code: 'CB-2601', name: 'Maya' },
+        { id: 'CB-2602', code: 'CB-2602', name: 'Ligaya' },
+        { id: 'CB-2603', code: 'CB-2603', name: 'Bituin' }
+      ]
+    };
+
+    const deliveries = [
+      {
+        id: 'DEL-0208',
+        batch: 'B260809A1 - Grade A current batch',
+        liters: 27.5,
+        quality: 'Grade A',
+        grade: 'Grade A',
+        status: 'Recorded',
+        date: '2026-08-09',
+        time: '2026-08-09T06:18:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      },
+      {
+        id: 'DEL-0207',
+        batch: 'B260807A1 - Grade A current batch',
+        liters: 25,
+        quality: 'Grade A',
+        grade: 'Grade A',
+        status: 'Recorded',
+        date: '2026-08-07',
+        time: '2026-08-07T06:21:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      },
+      {
+        id: 'DEL-0206',
+        batch: 'B260805B1 - Grade B current batch',
+        liters: 23.5,
+        quality: 'Grade B',
+        grade: 'Grade B',
+        status: 'Recorded',
+        date: '2026-08-05',
+        time: '2026-08-05T06:33:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      },
+      {
+        id: 'DEL-0205',
+        batch: 'B260803A1 - Grade A current batch',
+        liters: 26,
+        quality: 'Grade A',
+        grade: 'Grade A',
+        status: 'Recorded',
+        date: '2026-08-03',
+        time: '2026-08-03T06:12:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      },
+      {
+        id: 'DEL-0204',
+        batch: 'B260801A1 - Grade A current batch',
+        liters: 24,
+        quality: 'Grade A',
+        grade: 'Grade A',
+        status: 'Recorded',
+        date: '2026-08-01',
+        time: '2026-08-01T06:27:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      },
+      {
+        id: 'DEL-0203',
+        batch: 'B260730C1 - Grade C current batch',
+        liters: 21,
+        quality: 'Grade C',
+        grade: 'Grade C',
+        status: 'Review',
+        date: '2026-07-30',
+        time: '2026-07-30T06:44:00.000+08:00',
+        box: 'Dairy Box Jalajala'
+      }
+    ];
+
+    const reports = [
+      {
+        id: 'r-260809-001',
+        carabao: 'CB-2602',
+        carabaoName: 'CB-2602 - Ligaya',
+        type: 'Sickness or weak condition',
+        severity: 'Moderate - needs checking today',
+        observed: '2026-08-09',
+        symptoms: ['Low appetite', 'Weak body'],
+        note: 'Ligaya ate less than usual this morning and moved slowly after feeding.',
+        status: 'Pending',
+        collectorStatus: 'pending',
+        time: '2026-08-09, 7:10 AM'
+      },
+      {
+        id: 'r-260805-001',
+        carabao: 'CB-2601',
+        carabaoName: 'CB-2601 - Maya',
+        type: 'Low milk output',
+        severity: 'Low - observe condition',
+        observed: '2026-08-05',
+        symptoms: ['Low appetite'],
+        note: 'Milk output dipped after heavy rain. Appetite returned by afternoon.',
+        status: 'Resolved',
+        collectorStatus: 'visited',
+        collectorVisitedAt: '2026-08-05T15:20:00.000+08:00',
+        time: '2026-08-05, 8:05 AM'
+      }
+    ];
+
+    const sampleDashboard = {
+      name: sampleUser.name,
+      owner: sampleUser.name,
+      ownerName: sampleUser.name,
+      farmerId: SAMPLE_FARMER_ID,
+      ownerCode: SAMPLE_FARMER_ID,
+      farmerCode: SAMPLE_FARMER_ID,
+      createdAt: sampleUser.createdAt,
+      phone: sampleUser.phone,
+      email: sampleUser.email,
+      location: sampleUser.location,
+      verified: true,
+      notifications: 2,
+      pickupLocation: {
+        lat: 14.333784,
+        lng: 121.319615,
+        label: 'Pinned farm pickup point (14.333784, 121.319615)'
+      },
+      pickupNotified: true,
+      pickupNotifiedAt: '2026-08-09T05:55:00.000+08:00',
+      today: {
+        liters: 27.5,
+        boxes: 1
+      },
+      status: {
+        coopAssigned: 1,
+        litersDelivered: 146.5,
+        quality: 'Grade A'
+      },
+      metrics: {
+        totalMilk: 146.5,
+        totalMilkDelta: '+8%',
+        avgQuality: '83%',
+        avgQualityNote: '5 of 6 recent deliveries passed Grade A/B',
+        deliveries: deliveries.length,
+        deliveriesNote: 'Recent milk records',
+        rank: 4,
+        rankNote: 'Among active farmer samples'
+      },
+      totalMilk: 146.5,
+      sixMonthOutput: 146.5,
+      monthlyAvg: 24,
+      avgMonthly: 24,
+      avgQuality: '83%',
+      avgQualityPercent: '83%',
+      rank: 4,
+      carabaos: sampleUser.carabaos,
+      carabaosCount: sampleUser.carabaos.length,
+      deliveries,
+      reports,
+      openReportsCount: 1,
+      qualityDistribution: { A: 4, B: 1, C: 1 },
+      quality: { A: 4, B: 1, C: 1 },
+      monthly: [
+        { label: 'Mar', liters: 0 },
+        { label: 'Apr', liters: 0 },
+        { label: 'May', liters: 0 },
+        { label: 'Jun', liters: 0 },
+        { label: 'Jul', liters: 21 },
+        { label: 'Aug', liters: 125.5 }
+      ],
+      bestBatch: 'B260809A1',
+      qualityConsistency: 'High',
+      suggestedFocus: 'Keep morning cooling time consistent before pickup',
+      notices: [
+        {
+          icon: 'M',
+          title: 'Collection recorded',
+          message: 'DEL-0208 - 27.5 L recorded (Grade A) into B260809A1',
+          time: 'Aug 9, 2026, 6:18 AM'
+        },
+        {
+          icon: 'H',
+          title: 'Health report pending',
+          message: 'Ligaya needs collector checking today.',
+          time: 'Aug 9, 2026, 7:10 AM'
+        }
+      ],
+      nextStep: {
+        expectedChecking: 'Today',
+        assignedCollector: 'Route 03 collector',
+        notifyVet: 'If weakness continues'
+      },
+      pushNotifications: true,
+      language: 'fil'
+    };
+
+    const batchMap = [
+      { id: 'B260809A1', grade: 'Grade A', opened: '2026-08-09T05:30:00.000+08:00', status: 'open' },
+      { id: 'B260807A1', grade: 'Grade A', opened: '2026-08-07T05:30:00.000+08:00', status: 'delivered', closed: '2026-08-07T11:30:00.000+08:00' },
+      { id: 'B260805B1', grade: 'Grade B', opened: '2026-08-05T05:30:00.000+08:00', status: 'delivered', closed: '2026-08-05T11:30:00.000+08:00' },
+      { id: 'B260803A1', grade: 'Grade A', opened: '2026-08-03T05:30:00.000+08:00', status: 'delivered', closed: '2026-08-03T11:30:00.000+08:00' },
+      { id: 'B260801A1', grade: 'Grade A', opened: '2026-08-01T05:30:00.000+08:00', status: 'delivered', closed: '2026-08-01T11:30:00.000+08:00' },
+      { id: 'B260730C1', grade: 'Grade C', opened: '2026-07-30T05:30:00.000+08:00', status: 'delivered', closed: '2026-07-30T11:30:00.000+08:00' }
+    ];
+
+    const collectionEntries = deliveries.map((delivery) => {
+      const batchId = String(delivery.batch || '').split(' ')[0];
+      return {
+        deliveryId: delivery.id,
+        farmer: sampleUser.name,
+        farmerId: SAMPLE_FARMER_ID,
+        liters: delivery.liters,
+        aptResult: delivery.status === 'Review' ? 'Needs retest' : 'Passed',
+        grade: delivery.grade,
+        batch: delivery.batch,
+        batchId,
+        sampleBottle: `${delivery.id}-S`,
+        remarks: delivery.status === 'Review' ? 'Needs follow-up quality check.' : 'Accepted at collection.',
+        date: delivery.time
+      };
+    });
+
+    const collectionBatches = batchMap.map((batch) => ({
+      ...batch,
+      label: `${batch.id} - ${batch.grade} current batch`,
+      target: 500,
+      box: 'Dairy Box Jalajala'
+    }));
+
+    function upsertBy(items, matcher, value) {
+      const index = items.findIndex(matcher);
+      if (index >= 0) {
+        items[index] = value;
+      } else {
+        items.push(value);
+      }
+      return items;
+    }
+
+    function createSampleAccount() {
+      const accounts = Array.isArray(safeGet('accounts', [])) ? safeGet('accounts', []) : [];
+      upsertBy(accounts, (account) => account.email === SAMPLE_EMAIL || account.farmerId === SAMPLE_FARMER_ID, sampleUser);
+      save('accounts', accounts);
+
+      const farmerDashboards = safeGet('farmerDashboards', {}) || {};
+      farmerDashboards[SAMPLE_FARMER_ID] = sampleDashboard;
+      save('farmerDashboards', farmerDashboards);
+
+      const collection = safeGet('collectorCollection', {}) || {};
+      const farmers = Array.isArray(collection.farmers) ? collection.farmers : [];
+      const batches = Array.isArray(collection.batches) ? collection.batches : [];
+      const entries = Array.isArray(collection.entries) ? collection.entries : [];
+
+      upsertBy(farmers, (farmer) => farmer.farmerId === SAMPLE_FARMER_ID, {
+        name: sampleUser.name,
+        farmerId: SAMPLE_FARMER_ID,
+        location: sampleUser.location
+      });
+
+      collectionBatches.forEach((batch) => {
+        upsertBy(batches, (item) => item.id === batch.id, batch);
+      });
+
+      collectionEntries.forEach((entry) => {
+        upsertBy(entries, (item) => item.deliveryId === entry.deliveryId, entry);
+      });
+
+      save('collectorCollection', {
+        ...collection,
+        farmers,
+        batches,
+        entries
+      });
+
+      save('currentUser', sampleUser);
+      save('farmerDashboard', sampleDashboard);
+
+      const pickupRequests = Array.isArray(safeGet('collectorPickupRequests', [])) ? safeGet('collectorPickupRequests', []) : [];
+      const activePickup = {
+        farmerId: SAMPLE_FARMER_ID,
+        farmer: sampleUser.name,
+        lat: sampleDashboard.pickupLocation.lat,
+        lng: sampleDashboard.pickupLocation.lng,
+        label: sampleDashboard.pickupLocation.label,
+        status: 'Waiting for pickup',
+        notifiedAt: '2026-08-09T05:55:00.000+08:00'
+      };
+      upsertBy(pickupRequests, (request) => request.farmerId === SAMPLE_FARMER_ID, activePickup);
+      save('collectorPickupRequests', pickupRequests);
+
+      window.location.href = 'farmers/dashboard.html';
+    }
+
+    document.getElementById('seed-sample').addEventListener('click', createSampleAccount);
+  </script>
+</body>
+</html>

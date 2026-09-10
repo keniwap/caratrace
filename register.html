@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box - Register</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell" aria-label="Register page">
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <h1>Create an account</h1>
+        <p>Create a farmer account to manage your deliveries and pickup requests.</p>
+      </header>
+
+      <section class="login-card" aria-labelledby="register-title">
+        <h2 id="register-title">Register</h2>
+        <p class="subtitle">All fields required.</p>
+
+        <form class="login-form" id="register-form" action="#" method="post">
+          <label class="field">
+            <span>Full name</span>
+            <input type="text" name="name" placeholder="Full name" required>
+          </label>
+
+          <!-- Farmer ID is auto-generated and not entered by the user -->
+
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="Email" autocomplete="email" required>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <input id="reg-password" type="password" name="password" placeholder="Password" autocomplete="new-password" required>
+          </label>
+
+          <button class="primary-button" type="submit">Create account</button>
+        </form>
+
+        <p class="muted">Already have an account? <a href="login.html">Sign in</a></p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('register-form');
+    const safeGet = (key) => {
+      try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) { return null; }
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const email = form.email.value.trim().toLowerCase();
+      const password = form.password.value;
+      // ignore manual farmerId input and generate a year-based ID instead
+      const now = new Date();
+      const createdAt = now.toISOString();
+      const year = now.getFullYear();
+
+      if (!name || !email || !password) {
+        alert('Please fill all fields.');
+        return;
+      }
+
+      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+      if (accounts.find(a => a.email === email)) {
+        alert('An account with that email already exists.');
+        return;
+      }
+
+      // determine next sequence for the current year
+      const extractYear = (acct) => {
+        if (!acct) return null;
+        if (acct.createdAt) {
+          try { return new Date(acct.createdAt).getFullYear(); } catch(e) { }
+        }
+        if (acct.farmerId) {
+          const m = String(acct.farmerId).match(/(\d{4})/);
+          if (m) return Number(m[1]);
+        }
+        return null;
+      };
+      const yearCount = accounts.reduce((acc, a) => acc + (extractYear(a) === year ? 1 : 0), 0);
+      const seq = yearCount + 1;
+      const generatedId = `${year}-${String(seq).padStart(4,'0')}`;
+
+      const newUser = { email, password, role: 'farmer', name, farmerId: generatedId, createdAt };
+      accounts.push(newUser);
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+
+      // create an empty dashboard for the new farmer and persist in per-user map
+      const dashboard = {
+        name,
+        farmerId: generatedId,
+        createdAt,
+        notifications: 0,
+        today: { liters: 0, boxes: 0 },
+        status: { coopAssigned: 0, litersDelivered: 0, quality: '' },
+        metrics: {},
+        deliveries: [],
+        notices: []
+      };
+      try {
+        const dashboards = JSON.parse(localStorage.getItem('farmerDashboards') || '{}');
+        dashboards[generatedId] = dashboard;
+        localStorage.setItem('farmerDashboards', JSON.stringify(dashboards));
+      } catch (e) {
+        // fall back to legacy single dashboard if storage parse fails
+        localStorage.setItem('farmerDashboard', JSON.stringify(dashboard));
+      }
+      // Registration complete — do not auto-login. Redirect to login page.
+      // localStorage.setItem('currentUser', JSON.stringify(newUser));
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>

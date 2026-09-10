@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box Login</title>
+  <link rel="stylesheet" href="styles.css?v=login-4">
+  <style>
+    html.login-background,
+    html.login-background body,
+    body.login-page,
+    body.login-page .page-shell {
+      background-image: linear-gradient(135deg, rgba(8, 43, 29, .46), rgba(255, 255, 255, .08)), url("./dairyboxbg/dairyboxbg.png") !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
+      background-attachment: fixed !important;
+    }
+    body.login-page .page-shell::before,
+    body.login-page .page-shell::after,
+    body.login-page .sky-lines { display: none !important; }
+  </style>
+</head>
+<body class="login-page">
+  <div class="login-background-image" aria-hidden="true">
+    <img src="dairyboxbg/dairyboxbg.png" alt="">
+  </div>
+  <main class="page-shell" aria-label="Login page">
+    <div class="sky-lines" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <p class="login-signature">JOHN KEN</p>
+        <p class="login-kicker">Dairy cooperative operations</p>
+        <h1>Welcome back to Dairy Box</h1>
+        <p>Manage collections, production, inventory, quality, and delivery updates from one connected workspace.</p>
+      </header>
+
+      <section class="login-card" aria-labelledby="login-title">
+        <h2 id="login-title">Sign in to your account</h2>
+        <p class="subtitle">Enter your account details to continue.</p>
+        <div class="login-trust"><span aria-hidden="true">✓</span> Secure role-based access</div>
+
+        <form class="login-form" id="login-form" action="#" method="post">
+          <label class="field">
+            <span>Email</span>
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+              <path d="M4 7l8 6 8-6"></path>
+            </svg>
+            <input type="email" name="email" placeholder="Email" autocomplete="email">
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+              <path d="M8 10V7a4 4 0 018 0v3"></path>
+            </svg>
+            <input id="password" type="password" name="password" placeholder="Password" autocomplete="current-password">
+            <button class="peek-button" type="button" aria-label="Show password" aria-controls="password">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </label>
+
+          <a class="forgot-link" href="#">Forgot password?</a>
+
+          <button class="primary-button" type="submit">Get Started</button>
+          <p class="muted">New here? <a href="register.html">Create an account</a></p>
+          <p class="muted">Administrator demo? <a href="sample-admin-account.html">Create the sample admin</a></p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const passwordInput = document.querySelector("#password");
+    const passwordButton = document.querySelector(".peek-button");
+
+    passwordButton.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      passwordButton.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+    });
+
+    const normalizeAccount = (account) => {
+      const normalized = { ...account };
+      const rawRole = String(normalized.role || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+      const explicitAccess = String(normalized.staffAccessRole || normalized.accessRole || '').trim().toLowerCase();
+      const descriptor = `${rawRole} ${normalized.department || ''} ${normalized.position || ''}`.toLowerCase();
+      if (rawRole === 'super_admin' || rawRole === 'superadmin' || rawRole === 'administrator') {
+        normalized.role = 'admin';
+      } else if (['admin', 'farmer', 'collector'].includes(rawRole)) {
+        normalized.role = rawRole;
+      } else if (rawRole === 'production_staff' || rawRole === 'production' || explicitAccess === 'production' || /production|processing|quality/.test(descriptor)) {
+        normalized.role = 'staff';
+        normalized.staffAccessRole = 'production';
+        normalized.department = 'Production';
+        normalized.position = 'Production Staff';
+      } else if (rawRole === 'sales_staff' || rawRole === 'sales' || explicitAccess === 'sales' || /sales|cashier|point.of.sale|pos/.test(descriptor)) {
+        normalized.role = 'staff';
+        normalized.staffAccessRole = 'sales';
+        normalized.department = 'Sales';
+        normalized.position = 'Sales Staff';
+      } else {
+        normalized.role = rawRole;
+      }
+      if (normalized.role === 'farmer' && !normalized.farmerId) normalized.farmerId = normalized.code || normalized.id || '';
+      if (normalized.role === 'collector' && !normalized.collectorId) normalized.collectorId = normalized.code || normalized.id || '';
+      if (normalized.role === 'staff' && !normalized.staffId) normalized.staffId = normalized.code || normalized.id || '';
+      return normalized;
+    };
+    const moduleHome = role => ({ farmer: 'farmers/dashboard.html', collector: 'collector/dashboard.html', staff: 'staff/dashboard.html', admin: 'admin/dashboard.html' }[role] || 'login.html?reason=role');
+
+    // Client-side authentication and role routing.
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = (loginForm.email.value || '').trim();
+      const password = loginForm.password.value || '';
+      let accounts;
+      try { accounts = JSON.parse(localStorage.getItem('accounts') || '[]'); } catch (_) { accounts = []; }
+      if (!Array.isArray(accounts)) accounts = [];
+      const normalizedAccountIndex = accounts.findIndex(account => String(account.email || '').trim().toLowerCase() === email.toLowerCase());
+      if (normalizedAccountIndex < 0) {
+        alert('Invalid credentials.');
+        return;
+      }
+      const storedAccount = accounts[normalizedAccountIndex];
+      if (/suspended/i.test(storedAccount.status || '')) {
+        alert('This account is suspended. Contact an administrator.');
+        return;
+      }
+      if (storedAccount.password !== password) {
+        alert('Invalid credentials.');
+        return;
+      }
+      let user = normalizeAccount(storedAccount);
+      const normalizedRole = String(user.role || '').trim().toLowerCase();
+      if (!['farmer', 'collector', 'staff', 'admin'].includes(normalizedRole)) {
+        alert('This account does not have a valid system role. Ask an administrator to update it.');
+        return;
+      }
+      user.lastSeen = new Date().toISOString();
+      accounts[normalizedAccountIndex] = user;
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+      // Repair only the older seed that incorrectly used a farmer's name.
+      const staleSampleCollectorName = !String(user.name || '').trim() || String(user.name).trim().toLowerCase() === 'ramon villanueva';
+      if (user.email === 'sample.collector@dairybox.local' && user.role === 'collector' && staleSampleCollectorName) {
+        user = { ...user, name: 'Gamin' };
+        const accountIndex = accounts.findIndex(account => account.email === user.email);
+        if (accountIndex >= 0) accounts[accountIndex] = user;
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+      }
+      // Save the current user. Only farmer logins may replace farmerDashboard.
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      if (user.role === 'farmer') {
+        try {
+          const dashboards = JSON.parse(localStorage.getItem('farmerDashboards') || '{}');
+          let userDash = dashboards && user.farmerId ? dashboards[user.farmerId] : null;
+
+          // Merge reports from the legacy single-farmer dashboard when it belongs to this farmer.
+          try {
+            const legacy = JSON.parse(localStorage.getItem('farmerDashboard') || 'null');
+            const legacyFarmerId = legacy && (legacy.farmerId || legacy.farmerCode || legacy.ownerCode);
+            if (legacy && legacyFarmerId === user.farmerId) {
+              if (!userDash) {
+                userDash = legacy;
+              } else {
+                const reports = new Map((userDash.reports || []).map(report => [report.id, report]));
+                (legacy.reports || []).forEach(report => reports.set(report.id, { ...(reports.get(report.id) || {}), ...report }));
+                userDash = { ...userDash, ...legacy, reports: [...reports.values()] };
+              }
+            }
+          } catch (e) {}
+
+          if (!userDash) {
+            userDash = {
+              name: user.name || '',
+              farmerId: user.farmerId || user.code || '',
+              createdAt: user.createdAt || new Date().toISOString(),
+              notifications: 0,
+              today: { liters: 0, boxes: 0 },
+              status: { coopAssigned: 0, litersDelivered: 0, quality: '' },
+              metrics: {},
+              deliveries: [],
+              notices: [],
+              reports: []
+            };
+          }
+
+          dashboards[user.farmerId] = userDash;
+          localStorage.setItem('farmerDashboards', JSON.stringify(dashboards));
+          localStorage.setItem('farmerDashboard', JSON.stringify(userDash));
+        } catch (e) {
+          // Ignore storage errors and continue to the farmer dashboard.
+        }
+      }
+      // Set up collectorDashboard for collector users
+      if (user.role === 'collector') {
+        try {
+          const existingCollectorDash = JSON.parse(localStorage.getItem('collectorDashboard') || 'null') || {};
+          const collectorDash = {
+            route: 'Route 03',
+            areas: 'Sipsipin, Bayugo, Punta, Palay-Palay',
+            window: '5-6 AM',
+            description: 'Route 03 milk collector and basic carabao health technician.',
+            notifications: [],
+            pickups: [],
+            tasks: [],
+            routeStops: [],
+            ...existingCollectorDash,
+            name: user.name || 'Collector',
+            collectorId: user.code || user.collectorId || user.farmerId || '',
+            phone: user.phone || existingCollectorDash.phone || '',
+            email: user.email || existingCollectorDash.email || ''
+          };
+          localStorage.setItem('collectorDashboard', JSON.stringify(collectorDash));
+        } catch (e) { /* ignore */ }
+      }
+      if (user.role === 'staff') {
+        try {
+          localStorage.setItem('staffDashboard', JSON.stringify({
+            name: user.name || 'Staff',
+            staffId: user.staffId || user.code || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            location: user.location || '',
+            department: user.department || 'Operations',
+            position: user.position || 'Staff',
+            staffAccessRole: user.staffAccessRole || '',
+            status: user.status || 'Active',
+            createdAt: user.createdAt || ''
+          }));
+        } catch (e) { /* ignore */ }
+      }
+      window.location.href = moduleHome(user.role);
+    });
+  </script>
+</body>
+</html>

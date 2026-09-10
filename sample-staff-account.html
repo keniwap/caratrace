@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box | Local Sample Staff</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .sample-card { width: min(100%, 680px); max-width: 680px; }
+    .staff-account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+    .staff-account-card { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(24, 83, 55, .14); border-radius: 9px; color: #244a35; background: rgba(244, 250, 246, .78); font-size: 13px; }
+    .staff-account-card h3 { margin: 0 0 3px; color: #102417; font-size: 16px; }
+    .staff-account-card span { color: #668073; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .staff-account-card strong { color: #102417; overflow-wrap: anywhere; }
+    .staff-account-card button { min-height: 42px; margin-top: 5px; }
+    .sample-actions { display: grid; gap: 10px; margin-top: 16px; }
+    .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid rgba(24, 83, 55, .18); border-radius: 8px; color: #185337; background: #fff; font-weight: 800; text-decoration: none; }
+    @media (max-width: 620px) { .staff-account-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page-shell" aria-label="Local sample Staff setup">
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <h1>Local Sample Staff</h1>
+        <p>Create Production and Sales Staff accounts in this browser while CaraTrace has no shared database.</p>
+      </header>
+
+      <section class="login-card sample-card" aria-labelledby="sample-title">
+        <h2 id="sample-title">Create Staff sample accounts</h2>
+        <p class="subtitle">Both accounts use the Staff module with their assigned department recorded.</p>
+
+        <div class="staff-account-grid">
+          <article class="staff-account-card">
+            <span>Production Staff</span>
+            <h3>Andrea Santos</h3>
+            <div>Email<br><strong>production.staff@dairybox.local</strong></div>
+            <div>Password<br><strong>sample123</strong></div>
+            <div>Staff ID<br><strong>STF-2026-001</strong></div>
+            <button class="primary-button" type="button" data-open-staff="STF-2026-001">Create &amp; Open Production</button>
+          </article>
+
+          <article class="staff-account-card">
+            <span>Sales Staff</span>
+            <h3>Miguel Reyes</h3>
+            <div>Email<br><strong>sales.staff@dairybox.local</strong></div>
+            <div>Password<br><strong>sample123</strong></div>
+            <div>Staff ID<br><strong>STF-2026-002</strong></div>
+            <button class="primary-button" type="button" data-open-staff="STF-2026-002">Create &amp; Open Sales</button>
+          </article>
+        </div>
+
+        <div class="sample-actions">
+          <a class="secondary-button" href="sample-farmer-account.html">Open Farmer sample setup</a>
+          <a class="secondary-button" href="sample-collector-account.html">Open Collector sample setup</a>
+          <a class="secondary-button" href="sample-admin-account.html">Open Admin sample setup</a>
+          <a class="secondary-button" href="login.html">Back to login</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const SAMPLE_PASSWORD = 'sample123';
+    const sampleStaff = [
+      {
+        email: 'production.staff@dairybox.local',
+        password: SAMPLE_PASSWORD,
+        role: 'staff',
+        name: 'Andrea Santos',
+        code: 'STF-2026-001',
+        staffId: 'STF-2026-001',
+        staffAccessRole: 'production',
+        department: 'Production',
+        position: 'Production Staff',
+        phone: '+63 917 555 0101',
+        location: 'Dairy Box Plant, Jalajala, Rizal',
+        status: 'Active',
+        verified: true,
+        createdAt: '2026-08-17T08:00:00.000+08:00'
+      },
+      {
+        email: 'sales.staff@dairybox.local',
+        password: SAMPLE_PASSWORD,
+        role: 'staff',
+        name: 'Miguel Reyes',
+        code: 'STF-2026-002',
+        staffId: 'STF-2026-002',
+        staffAccessRole: 'sales',
+        department: 'Sales',
+        position: 'Sales Staff',
+        verified: true,
+        createdAt: '2026-08-17T08:05:00.000+08:00'
+      }
+    ];
+
+    const safeGet = (key, fallback) => {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value == null ? fallback : value;
+      } catch (error) {
+        return fallback;
+      }
+    };
+
+    const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+    function installStaffAccounts() {
+      const accounts = Array.isArray(safeGet('accounts', [])) ? safeGet('accounts', []) : [];
+      sampleStaff.forEach((staff) => {
+        const index = accounts.findIndex((account) => account.email === staff.email || account.staffId === staff.staffId || account.code === staff.code);
+        if (index >= 0) accounts[index] = { ...accounts[index], ...staff };
+        else accounts.push(staff);
+      });
+      save('accounts', accounts);
+
+      const profiles = safeGet('staffProfiles', {}) || {};
+      sampleStaff.forEach((staff) => { profiles[staff.staffId] = staff; });
+      save('staffProfiles', profiles);
+    }
+
+    document.querySelectorAll('[data-open-staff]').forEach((button) => {
+      button.addEventListener('click', () => {
+        installStaffAccounts();
+        const staff = sampleStaff.find((item) => item.staffId === button.dataset.openStaff);
+        save('currentUser', staff);
+        save('staffDashboard', {
+          name: staff.name,
+          staffId: staff.staffId,
+          email: staff.email,
+          department: staff.department,
+          staffAccessRole: staff.staffAccessRole,
+          position: staff.position
+        });
+        window.location.href = 'staff/dashboard.html';
+      });
+    });
+  </script>
+</body>
+</html>

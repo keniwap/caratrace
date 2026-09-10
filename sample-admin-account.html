@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box | Local Sample Administrator</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .sample-card { max-width: 560px; }
+    .sample-actions { display: grid; gap: 12px; margin-top: 20px; }
+    .sample-credentials { display: grid; gap: 10px; margin-top: 18px; padding: 16px; border: 1px solid rgba(24, 83, 55, .14); border-radius: 8px; color: #244a35; background: rgba(244, 250, 246, .72); font-size: 14px; }
+    .sample-credentials strong { color: #102417; overflow-wrap: anywhere; }
+    .sample-note { margin: 14px 0 0; color: #668073; font-size: 12px; line-height: 1.55; }
+    .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; border: 1px solid rgba(24, 83, 55, .18); border-radius: 8px; color: #185337; background: #fff; font-weight: 800; text-decoration: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main class="page-shell" aria-label="Local sample administrator setup">
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <h1>Local Sample Administrator</h1>
+        <p>Create an administrator account in this browser and open the administration console.</p>
+      </header>
+
+      <section class="login-card sample-card" aria-labelledby="sample-title">
+        <h2 id="sample-title">Create admin sample account</h2>
+        <p class="subtitle">Use this account to review the records created by the farmer, collector, and staff samples.</p>
+
+        <div class="sample-credentials">
+          <div>Administrator: <strong>Alex Admin</strong></div>
+          <div>Email: <strong>sample.admin@dairybox.local</strong></div>
+          <div>Password: <strong>sample123</strong></div>
+          <div>Admin ID: <strong>ADM-2026-001</strong></div>
+        </div>
+
+        <p class="sample-note">The account is saved only in this browser. Existing accounts and operational records are preserved.</p>
+
+        <div class="sample-actions">
+          <button class="primary-button" id="seed-sample-admin" type="button">Create and open admin account</button>
+          <a class="secondary-button" href="sample-farmer-account.html">Open Farmer sample setup</a>
+          <a class="secondary-button" href="sample-collector-account.html">Open Collector sample setup</a>
+          <a class="secondary-button" href="sample-staff-account.html">Open Staff sample setup</a>
+          <a class="secondary-button" href="login.html">Back to login</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const sampleAdmin = {
+      email: 'sample.admin@dairybox.local',
+      password: 'sample123',
+      role: 'admin',
+      name: 'Alex Admin',
+      id: 'ADM-2026-001',
+      code: 'ADM-2026-001',
+      position: 'System Administrator',
+      department: 'Main Office',
+      area: 'Main Office',
+      status: 'Active',
+      verified: true,
+      createdAt: '2026-08-31T08:00:00.000+08:00'
+    };
+
+    const safeGet = (key, fallback) => {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value == null ? fallback : value;
+      } catch (error) {
+        return fallback;
+      }
+    };
+
+    const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+    function createSampleAdmin() {
+      const accounts = Array.isArray(safeGet('accounts', [])) ? safeGet('accounts', []) : [];
+      const index = accounts.findIndex(account => account.email === sampleAdmin.email || account.id === sampleAdmin.id || account.code === sampleAdmin.code);
+      if (index >= 0) accounts[index] = { ...accounts[index], ...sampleAdmin };
+      else accounts.push(sampleAdmin);
+      save('accounts', accounts);
+
+      const profiles = safeGet('adminProfiles', {}) || {};
+      profiles[sampleAdmin.id] = sampleAdmin;
+      save('adminProfiles', profiles);
+
+      const logs = Array.isArray(safeGet('dairyBoxAdminAudit', [])) ? safeGet('dairyBoxAdminAudit', []) : [];
+      logs.unshift({
+        id: `LOG-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        user: sampleAdmin.name,
+        userId: sampleAdmin.id,
+        module: 'Users',
+        action: 'Installed and opened the local sample administrator account.',
+        severity: 'Info'
+      });
+      save('dairyBoxAdminAudit', logs.slice(0, 1000));
+      save('currentUser', sampleAdmin);
+      window.location.href = 'admin/dashboard.html';
+    }
+
+    document.getElementById('seed-sample-admin').addEventListener('click', createSampleAdmin);
+  </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dairy Box | Local Sample Collector</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .sample-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .sample-card {
+      max-width: 560px;
+    }
+
+    .sample-credentials {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 0;
+      padding: 16px;
+      border: 1px solid rgba(24, 83, 55, 0.14);
+      border-radius: 8px;
+      color: #244a35;
+      background: rgba(244, 250, 246, 0.72);
+      font-size: 14px;
+    }
+
+    .sample-credentials strong {
+      color: #102417;
+    }
+
+    .secondary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      border: 1px solid rgba(24, 83, 55, 0.18);
+      border-radius: 8px;
+      color: #185337;
+      background: #ffffff;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell" aria-label="Local sample collector setup">
+    <div class="login-wrap">
+      <header class="page-intro">
+        <img class="system-logo" src="DairyBoxLogo/DairyBoxLogo.png" alt="Dairy Box">
+        <h1>Local Sample Collector</h1>
+        <p>This creates a collector account and realistic route data in this browser while the system has no database.</p>
+      </header>
+
+      <section class="login-card sample-card" aria-labelledby="sample-title">
+        <h2 id="sample-title">Create collector sample data</h2>
+        <p class="subtitle">The installer adds three assigned farmers, today's collections, batches, a pending pickup, and a health report.</p>
+
+        <div class="sample-credentials">
+          <div>Collector Name: <strong>Gamin</strong></div>
+          <div>Email: <strong>sample.collector@dairybox.local</strong></div>
+          <div>Password: <strong>sample123</strong></div>
+          <div>Collector ID: <strong>COL-2026-001</strong></div>
+        </div>
+
+        <div class="sample-actions">
+          <button class="primary-button" id="seed-sample" type="button">Create and open sample account</button>
+          <a class="secondary-button" href="sample-farmer-account.html">Open farmer sample setup</a>
+          <a class="secondary-button" href="sample-staff-account.html">Open Staff sample setup</a>
+          <a class="secondary-button" href="sample-admin-account.html">Open Admin sample setup</a>
+          <a class="secondary-button" href="login.html">Back to login</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const SAMPLE_EMAIL = 'sample.collector@dairybox.local';
+    const SAMPLE_PASSWORD = 'sample123';
+    const SAMPLE_COLLECTOR_ID = 'COL-2026-001';
+
+    const safeGet = (key, fallback) => {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value == null ? fallback : value;
+      } catch (error) {
+        return fallback;
+      }
+    };
+
+    const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+    const upsertBy = (items, matcher, value) => {
+      const index = items.findIndex(matcher);
+      if (index >= 0) items[index] = value;
+      else items.push(value);
+      return items;
+    };
+
+    const localDate = (offsetDays = 0) => {
+      const date = new Date();
+      date.setDate(date.getDate() + offsetDays);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
+    const localIso = (offsetDays, hour, minute) => {
+      const date = new Date();
+      date.setDate(date.getDate() + offsetDays);
+      date.setHours(hour, minute, 0, 0);
+      const offset = -date.getTimezoneOffset();
+      const sign = offset >= 0 ? '+' : '-';
+      const zoneHour = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+      const zoneMinute = String(Math.abs(offset) % 60).padStart(2, '0');
+      return `${localDate(offsetDays)}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00${sign}${zoneHour}:${zoneMinute}`;
+    };
+
+    const batchCode = (offsetDays, grade) => {
+      const date = new Date();
+      date.setDate(date.getDate() + offsetDays);
+      return `B${String(date.getFullYear()).slice(-2)}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}${grade}1`;
+    };
+
+    const sampleCollector = {
+      email: SAMPLE_EMAIL,
+      password: SAMPLE_PASSWORD,
+      role: 'collector',
+      name: 'Gamin',
+      code: SAMPLE_COLLECTOR_ID,
+      collectorId: SAMPLE_COLLECTOR_ID,
+      phone: '+63 917 555 0200',
+      location: 'Jalajala, Rizal',
+      verified: true,
+      createdAt: '2026-08-01T08:00:00.000+08:00'
+    };
+
+    const sampleFarmers = [
+      {
+        email: 'elena.cruz@dairybox.local',
+        password: 'farmer123',
+        role: 'farmer',
+        name: 'Elena Cruz',
+        farmerId: '2026-0101',
+        code: '2026-0101',
+        phone: '+63 917 555 0101',
+        location: 'Punta, Jalajala',
+        verified: true,
+        carabaos: [{ id: 'CB-2701', code: 'CB-2701', name: 'Amihan' }]
+      },
+      {
+        email: 'liza.mercado@dairybox.local',
+        password: 'farmer123',
+        role: 'farmer',
+        name: 'Liza Mercado',
+        farmerId: '2026-0102',
+        code: '2026-0102',
+        phone: '+63 917 555 0102',
+        location: 'Bayugo, Jalajala',
+        verified: true,
+        carabaos: [{ id: 'CB-2702', code: 'CB-2702', name: 'Mutya' }]
+      },
+      {
+        email: 'paulo.reyes@dairybox.local',
+        password: 'farmer123',
+        role: 'farmer',
+        name: 'Paulo Reyes',
+        farmerId: '2026-0103',
+        code: '2026-0103',
+        phone: '+63 917 555 0103',
+        location: 'Sipsipin, Jalajala',
+        verified: true,
+        carabaos: [{ id: 'CB-2703', code: 'CB-2703', name: 'Tala' }]
+      }
+    ];
+
+    const collectorDashboard = {
+      name: sampleCollector.name,
+      collectorId: SAMPLE_COLLECTOR_ID,
+      route: 'Route 03',
+      areas: 'Punta, Bayugo, Sipsipin',
+      window: '5:00-8:00 AM',
+      phone: sampleCollector.phone,
+      email: sampleCollector.email,
+      description: 'Route 03 milk collector and basic carabao health technician.',
+      notifications: [
+        { icon: 'R', title: 'Route ready', message: 'Three farmers are assigned to today\'s collection route.', time: 'Today, 5:00 AM' }
+      ],
+      pickups: [],
+      tasks: [],
+      routeStops: []
+    };
+
+    const gradeABatch = batchCode(0, 'A');
+    const gradeBBatch = batchCode(0, 'B');
+    const deliveredBatch = batchCode(-1, 'A');
+
+    const sampleEntries = [
+      {
+        sampleOwner: SAMPLE_COLLECTOR_ID,
+        deliveryId: 'DEL-C901',
+        farmer: sampleFarmers[0].name,
+        farmerId: sampleFarmers[0].farmerId,
+        liters: 24.5,
+        aptResult: 'Passed',
+        grade: 'Grade A',
+        batch: `${gradeABatch} - Grade A current batch`,
+        batchId: gradeABatch,
+        sampleBottle: 'S-C901',
+        remarks: 'Accepted at collection.',
+        collector: sampleCollector.name,
+        collectorId: SAMPLE_COLLECTOR_ID,
+        date: localIso(0, 5, 45)
+      },
+      {
+        sampleOwner: SAMPLE_COLLECTOR_ID,
+        deliveryId: 'DEL-C902',
+        farmer: sampleFarmers[1].name,
+        farmerId: sampleFarmers[1].farmerId,
+        liters: 21,
+        aptResult: 'Needs retest',
+        grade: 'Grade B',
+        batch: `${gradeBBatch} - Grade B current batch`,
+        batchId: gradeBBatch,
+        sampleBottle: 'S-C902',
+        remarks: 'Hold for follow-up quality check.',
+        collector: sampleCollector.name,
+        collectorId: SAMPLE_COLLECTOR_ID,
+        date: localIso(0, 6, 20)
+      },
+      {
+        sampleOwner: SAMPLE_COLLECTOR_ID,
+        deliveryId: 'DEL-C890',
+        farmer: sampleFarmers[0].name,
+        farmerId: sampleFarmers[0].farmerId,
+        liters: 23,
+        aptResult: 'Passed',
+        grade: 'Grade A',
+        batch: `${deliveredBatch} - Grade A delivered batch`,
+        batchId: deliveredBatch,
+        sampleBottle: 'S-C890',
+        remarks: 'Delivered to Dairy Box.',
+        collector: sampleCollector.name,
+        collectorId: SAMPLE_COLLECTOR_ID,
+        date: localIso(-1, 5, 55)
+      }
+    ];
+
+    const sampleBatches = [
+      { sampleOwner: SAMPLE_COLLECTOR_ID, id: gradeABatch, label: `${gradeABatch} - Grade A current batch`, grade: 'Grade A', target: 500, status: 'open', opened: localIso(0, 5, 0), box: 'Dairy Box Jalajala' },
+      { sampleOwner: SAMPLE_COLLECTOR_ID, id: gradeBBatch, label: `${gradeBBatch} - Grade B current batch`, grade: 'Grade B', target: 300, status: 'open', opened: localIso(0, 5, 5), box: 'Dairy Box Jalajala' },
+      { sampleOwner: SAMPLE_COLLECTOR_ID, id: deliveredBatch, label: `${deliveredBatch} - Grade A delivered batch`, grade: 'Grade A', target: 500, status: 'delivered', opened: localIso(-1, 5, 0), closed: localIso(-1, 10, 30), box: 'Dairy Box Jalajala' }
+    ];
+
+    const farmerDashboard = farmer => ({
+      name: farmer.name,
+      ownerName: farmer.name,
+      farmerId: farmer.farmerId,
+      ownerCode: farmer.farmerId,
+      phone: farmer.phone,
+      email: farmer.email,
+      location: farmer.location,
+      verified: true,
+      carabaos: farmer.carabaos,
+      deliveries: [],
+      reports: [],
+      notices: [],
+      today: { liters: 0, boxes: 0 },
+      status: { coopAssigned: 1, litersDelivered: 0, quality: '' },
+      metrics: { totalMilk: 0, deliveries: 0 }
+    });
+
+    function createSampleAccount() {
+      const accounts = Array.isArray(safeGet('accounts', [])) ? safeGet('accounts', []) : [];
+      upsertBy(accounts, account => account.email === SAMPLE_EMAIL || account.code === SAMPLE_COLLECTOR_ID, sampleCollector);
+      sampleFarmers.forEach(farmer => {
+        upsertBy(accounts, account => account.email === farmer.email || account.farmerId === farmer.farmerId, farmer);
+      });
+      save('accounts', accounts);
+
+      const dashboards = safeGet('farmerDashboards', {}) || {};
+      sampleFarmers.forEach(farmer => {
+        dashboards[farmer.farmerId] = { ...farmerDashboard(farmer), ...(dashboards[farmer.farmerId] || {}) };
+      });
+
+      dashboards[sampleFarmers[0].farmerId].reports = [
+        {
+          id: 'r-collector-sample-001',
+          carabao: 'CB-2701',
+          carabaoName: 'CB-2701 - Amihan',
+          type: 'Sickness or weak condition',
+          severity: 'Moderate - needs checking today',
+          observed: localDate(0),
+          symptoms: ['Low appetite', 'Weak body'],
+          note: 'Amihan has eaten less since this morning and needs a collector check.',
+          status: 'Pending',
+          collectorStatus: 'pending',
+          time: new Date().toLocaleString()
+        }
+      ];
+      dashboards[sampleFarmers[1].farmerId].reports = [
+        {
+          id: 'r-collector-sample-002',
+          carabao: 'CB-2702',
+          carabaoName: 'CB-2702 - Mutya',
+          type: 'Low milk output',
+          severity: 'Low - observe condition',
+          observed: localDate(-1),
+          symptoms: ['Low appetite'],
+          note: 'Milk output returned to normal after feeding.',
+          status: 'Resolved',
+          collectorStatus: 'visited',
+          time: new Date().toLocaleString()
+        }
+      ];
+      save('farmerDashboards', dashboards);
+
+      const collection = safeGet('collectorCollection', {}) || {};
+      const farmers = (Array.isArray(collection.farmers) ? collection.farmers : []).filter(item => item.sampleOwner !== SAMPLE_COLLECTOR_ID);
+      const entries = (Array.isArray(collection.entries) ? collection.entries : []).filter(item => item.sampleOwner !== SAMPLE_COLLECTOR_ID);
+      const batches = (Array.isArray(collection.batches) ? collection.batches : []).filter(item => item.sampleOwner !== SAMPLE_COLLECTOR_ID);
+
+      sampleFarmers.forEach(farmer => {
+        upsertBy(farmers, item => item.farmerId === farmer.farmerId, {
+          sampleOwner: SAMPLE_COLLECTOR_ID,
+          name: farmer.name,
+          farmerId: farmer.farmerId,
+          location: farmer.location,
+          phone: farmer.phone,
+          carabaos: farmer.carabaos.length
+        });
+      });
+      sampleEntries.forEach(entry => upsertBy(entries, item => item.deliveryId === entry.deliveryId, entry));
+      sampleBatches.forEach(batch => upsertBy(batches, item => item.id === batch.id, batch));
+      save('collectorCollection', { ...collection, farmers, entries, batches });
+
+      const pickupRequests = Array.isArray(safeGet('collectorPickupRequests', [])) ? safeGet('collectorPickupRequests', []) : [];
+      upsertBy(pickupRequests, request => request.farmerId === sampleFarmers[2].farmerId, {
+        farmerId: sampleFarmers[2].farmerId,
+        farmer: sampleFarmers[2].name,
+        lat: 14.333784,
+        lng: 121.319615,
+        label: 'Pinned farm pickup point (14.333784, 121.319615)',
+        status: 'Waiting for pickup',
+        notifiedAt: localIso(0, 6, 35)
+      });
+      save('collectorPickupRequests', pickupRequests);
+
+      save('collectorDashboard', collectorDashboard);
+      save('currentUser', sampleCollector);
+      window.location.href = 'collector/dashboard.html';
+    }
+
+    document.getElementById('seed-sample').addEventListener('click', createSampleAccount);
+  </script>
+</body>
+</html>
